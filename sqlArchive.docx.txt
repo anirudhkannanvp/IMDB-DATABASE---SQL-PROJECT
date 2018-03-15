@@ -1,0 +1,769 @@
+
+1. create database IMDBTA;
+	Query OK, 1 row affected (0.00 sec)
+
+2. use IMDBTA;
+	Database changed
+
+3. create table titlebasics(tconst varchar(20) primary key, titleType varchar(20), primaryTitle varchar(50), originalTitle varchar(50), isAdult int, startYear int, endYear int, runtimeMinutes int, genres varchar(50));
+	Query OK, 0 rows affected (0.52 sec)
+
+4. desc titlebasics;
+	+----------------+-------------+------+-----+---------+-------+
+	| Field          | Type        | Null | Key | Default | Extra |
+	+----------------+-------------+------+-----+---------+-------+
+	| tconst         | varchar(20) | NO   | PRI | NULL    |       |
+	| titleType      | varchar(20) | YES  |     | NULL    |       |
+	| primaryTitle   | varchar(50) | YES  |     | NULL    |       |
+	| originalTitle  | varchar(50) | YES  |     | NULL    |       |
+	| isAdult        | int(11)     | YES  |     | NULL    |       |
+	| startYear      | int(11)     | YES  |     | NULL    |       |
+	| endYear        | int(11)     | YES  |     | NULL    |       |
+	| runtimeMinutes | int(11)     | YES  |     | NULL    |       |
+	| genres         | varchar(50) | YES  |     | NULL    |       |
+	+----------------+-------------+------+-----+---------+-------+
+	9 rows in set (0.00 sec)
+
+4.b python3 controller.py
+
+	f=open('titlebasics/data.tsv','r')
+	s=f.read().split('\n')[:20000]
+	f.close()
+	s1=[]
+	for i in s:
+		i=list(i.split('\t'))
+		j=i[-1].split(',')
+		s1.append("\t".join(i[:-1]+[j[0]]))
+	s=s1
+	f1=open('titlebasics/data1.tsv','w')
+	f1.write("\n".join(s))
+	f1.close()
+
+5. load data local infile "/home/tejkiran/DBMS mini Project 2/titlebasics/data1.tsv" into table titlebasics fields terminated by '\t' lines terminated by '\n';
+	Query OK, 20000 rows affected, 301 warnings (0.36 sec)
+	Records: 20000  Deleted: 0  Skipped: 0  Warnings: 301
+
+6.	create table namebasics(nconst varchar(20) primary key, primaryName varchar(50), birthYear int, deathYear int, primaryProfession varchar(50), knownForTitles varchar(20), foreign key namebasics(knownForTitles) references titlebasics(tconst));
+	Query OK, 0 rows affected (0.58 sec)
+
+7. desc namebasics;
+	+-------------------+-------------+------+-----+---------+-------+
+	| Field             | Type        | Null | Key | Default | Extra |
+	+-------------------+-------------+------+-----+---------+-------+
+	| nconst            | varchar(20) | NO   | PRI | NULL    |       |
+	| primaryName       | varchar(50) | YES  |     | NULL    |       |
+	| birthYear         | int(11)     | YES  |     | NULL    |       |
+	| deathYear         | int(11)     | YES  |     | NULL    |       |
+	| primaryProfession | varchar(50) | YES  |     | NULL    |       |
+	| knownForTitles    | varchar(20) | YES  | MUL | NULL    |       |
+	+-------------------+-------------+------+-----+---------+-------+
+	6 rows in set (0.00 sec)
+
+7.b
+	f=open('namebasics/data.tsv','r')
+	s=f.read().split('\n')[:2779]
+	f.close()
+	s1=[]
+	for i in s:
+		i=list(i.split('\t'))
+		j1=i[-2].split(',')
+		j2=i[-1].split(',')
+		s1.append("\t".join(i[:-2]+[j1[0]]+[j2[0]]))
+	s=s1
+	f1=open('namebasics/data1.tsv','w')
+	f1.write("\n".join(s))
+	f1.close()
+
+8.  load data local infile "/home/tejkiran/DBMS mini Project 2/namebasics/data1.tsv" into table namebasics fields terminated by '\t' lines terminated by '\n';
+	Query OK, 19727 rows affected, 272 warnings (6.92 sec)
+	Records: 19999  Deleted: 0  Skipped: 272  Warnings: 272
+
+9. create table ratings(tconst varchar(20), averageRating float, numVotes int, foreign key ratings(tconst) references titlebasics(tconst));
+Query OK, 0 rows affected (0.70 sec)
+
+10. desc ratings;
+	+---------------+-------------+------+-----+---------+-------+
+	| Field         | Type        | Null | Key | Default | Extra |
+	+---------------+-------------+------+-----+---------+-------+
+	| tconst        | varchar(20) | YES  | MUL | NULL    |       |
+	| averageRating | float       | YES  |     | NULL    |       |
+	| numVotes      | int(11)     | YES  |     | NULL    |       |
+	+---------------+-------------+------+-----+---------+-------+
+	3 rows in set (0.00 sec)
+
+11. load data local infile "/home/tejkiran/DBMS mini Project 2/ratings/data1.tsv" into table ratings fields terminated by '\t' lines terminated by '\n';
+	Query OK, 4807 rows affected (2.71 sec)
+	Records: 4807  Deleted: 0  Skipped: 0  Warnings: 0
+
+12. create table crew(tconst varchar(20), director varchar(50), writer varchar(50), foreign key crew(tconst) references titlebasics(tconst) );
+	Query OK, 0 rows affected (0.66 sec)
+
+12. desc crew;
+	+----------+-------------+------+-----+---------+-------+
+	| Field    | Type        | Null | Key | Default | Extra |
+	+----------+-------------+------+-----+---------+-------+
+	| tconst   | varchar(20) | YES  | MUL | NULL    |       |
+	| director | varchar(50) | YES  |     | NULL    |       |
+	| writer   | varchar(50) | YES  |     | NULL    |       |
+	+----------+-------------+------+-----+---------+-------+
+	3 rows in set (0.00 sec)
+
+13. load data local infile "/home/tejkiran/DBMS mini Project 2/crew/data1.tsv" into table crew fields terminated by '\t' lines terminated by '\n';
+	Query OK, 19999 rows affected (5.48 sec)
+	Records: 19999  Deleted: 0  Skipped: 0  Warnings: 0
+
+14. Query1: Find the directorNames who are over 50 years of age whose movies have had a rating between 4 and 9 and titleType='short' or 'movie'
+
+	select distinct primaryName from namebasics join crew on namebasics.nconst=crew.director join ratings on crew.tconst=ratings.tconst join titlebasics on ratings.tconst=titlebasics.tconst where namebasics.birthYear<=1968 and ratings.averageRating>=4 and titlebasics.titleType='short' or titlebasics.titleType='movie';
+
+	(A) with no indexing:
+	+-------------------------------------+
+	| primaryName                         |
+	+-------------------------------------+
+	| William K.L. Dickson                |
+	| Birt Acres                          |
+	| FructuÃ³s Gelabert                  |
+	| Siegmund Lubin                      |
+	| G.W. Bitzer                         |
+	| Gilbert M. 'Broncho Billy' Anderson |
+	| D.W. Griffith                       |
+	| Herbert Beerbohm Tree               |
+	| Michael Curtiz                      |
+	| Oscar Apfel                         |
+	| Cecil B. DeMille                    |
+	| Charles Chaplin                     |
+	| Roscoe 'Fatty' Arbuckle             |
+	| Harry Carey                         |
+	| John G. Adolfi                      |
+	| Maurice Elvey                       |
+	| John Ford                           |
+	| Harry Davenport                     |
+	| Erich von Stroheim                  |
+	| Fritz Lang                          |
+	| Victor Schertzinger                 |
+	| F.W. Murnau                         |
+	| Carl Theodor Dreyer                 |
+	| John McDermott                      |
+	| Lillian Gish                        |
+	| Buster Keaton                       |
+	| William F. Adler                    |
+	| George Archainbaud                  |
+	| Rex Ingram                          |
+	| King Baggot                         |
+	| Ludwig Berger                       |
+	| Phil Rosen                          |
+	| Dorothy Arzner                      |
+	| Walt Disney                         |
+	| Legaren Ã  Hiller                   |
+	| Sergei M. Eissenstein                |
+	| Kenji Mizoguchi                     |
+	| Ivan Abramson                       |
+	| Victor Adamson                      |
+	| James P. Hogan                      |
+	| Alan Hale                           |
+	| Charles Lamont                      |
+	| Alfred Hitchcock                    |
+	| Howard Hawks                        |
+	| Edwin B. DuPar                      |
+	| Frank Capra                         |
+	| Byron Haskin                        |
+	| Grigoriy Aleksandrov                |
+	| Anthony Asquith                     |
+	| Harry Langdon                       |
+	| Marc AllÃ©gret                      |
+	| Nina Agadzhanova                    |
+	| George Abbott                       |
+	| Lionel Barrymore                    |
+	+-------------------------------------+
+	54 rows in set (0.06 sec)
+
+	(B) with BTree indexing on titleType
+
+	alter table titlebasics add index index2(titleType);
+	Query OK, 0 rows affected (2.30 sec)
+	Records: 0  Duplicates: 0  Warnings: 0
+
+	select distinct primaryName from namebasics join crew on namebasics.nconst=crew.director join ratings on crew.tconst=ratings.tconst join titlebasics on ratings.tconst=titlebasics.tconst where namebasics.birthYear<=1968 and ratings.averageRating>=4 and titlebasics.titleType='short' or titlebasics.titleType='movie';
+	+-------------------------------------+
+	| primaryName                         |
+	+-------------------------------------+
+	| William K.L. Dickson                |
+	| Birt Acres                          |
+	| FructuÃ³s Gelabert                  |
+	| Siegmund Lubin                      |
+	| G.W. Bitzer                         |
+	| Gilbert M. 'Broncho Billy' Anderson |
+	| D.W. Griffith                       |
+	| Herbert Beerbohm Tree               |
+	| Michael Curtiz                      |
+	| Oscar Apfel                         |
+	| Cecil B. DeMille                    |
+	| Charles Chaplin                     |
+	| Roscoe 'Fatty' Arbuckle             |
+	| Harry Carey                         |
+	| John G. Adolfi                      |
+	| Maurice Elvey                       |
+	| John Ford                           |
+	| Harry Davenport                     |
+	| Erich von Stroheim                  |
+	| Fritz Lang                          |
+	| Victor Schertzinger                 |
+	| F.W. Murnau                         |
+	| Carl Theodor Dreyer                 |
+	| John McDermott                      |
+	| Lillian Gish                        |
+	| Buster Keaton                       |
+	| William F. Adler                    |
+	| George Archainbaud                  |
+	| Rex Ingram                          |
+	| King Baggot                         |
+	| Ludwig Berger                       |
+	| Phil Rosen                          |
+	| Dorothy Arzner                      |
+	| Walt Disney                         |
+	| Legaren Ã  Hiller                   |
+	| Sergei M. Eisenstein                |
+	| Kenji Mizoguchi                     |
+	| Ivan Abramson                       |
+	| Victor Adamson                      |
+	| James P. Hogan                      |
+	| Alan Hale                           |
+	| Charles Lamont                      |
+	| Alfred Hitchcock                    |
+	| Howard Hawks                        |
+	| Edwin B. DuPar                      |
+	| Frank Capra                         |
+	| Byron Haskin                        |
+	| Grigoriy Aleksandrov                |
+	| Anthony Asquith                     |
+	| Harry Langdon                       |
+	| Marc AllÃ©gret                      |
+	| Nina Agadzhanova                    |
+	| George Abbott                       |
+	| Lionel Barrymore                    |
+	+-------------------------------------+
+	54 rows in set (0.04 sec)
+
+15. Query2: Find the top movieNames and its director, which is a non-adult comedy film, having averageRating > 3 and directed by a person whose name starts does not start with vowels sorted by its movienames.
+
+	select distinct titlebasics.primaryTitle, namebasics.primaryName from namebasics join crew on namebasics.nconst=crew.director join ratings on crew.tconst=ratings.tconst join titlebasics on ratings.tconst=titlebasics.tconst where titlebasics.isAdult=0 and titlebasics.genres='comedy' and ratings.averageRating>3 and namebasics.primaryName not like 'a%' and namebasics.primaryName not like 'e%'and namebasics.primaryName not like 'i%'and namebasics.primaryName not like 'o%'and namebasics.primaryName not like 'u%' order by titlebasics.primaryTitle;
+	+----------------------------------------------------+-------------------------------------+
+	| primaryTitle                                       | primaryName                         |
+	+----------------------------------------------------+-------------------------------------+
+	| A Calamitous Elopement                             | D.W. Griffith                       |
+	| A Country Hero                                     | Roscoe 'Fatty' Arbuckle             |
+	| A Day's Pleasure                                   | Charles Chaplin                     |
+	| A Dog's Life                                       | Charles Chaplin                     |
+	| A Gun Fightin' Gentleman                           | John Ford                           |
+	| A Hard Wash                                        | William K.L. Dickson                |
+	| A Jitney Elopement                                 | Charles Chaplin                     |
+	| A Night in the Show                                | Charles Chaplin                     |
+	| A Night Out                                        | Charles Chaplin                     |
+	| A Reckless Romeo                                   | Roscoe 'Fatty' Arbuckle             |
+	| A Woman                                            | Charles Chaplin                     |
+	| A Woman's Fool                                     | John Ford                           |
+	| Alkali Ike's Auto                                  | Gilbert M. 'Broncho Billy' Anderson |
+	| An Awful Skate; or, The Hobo on Rollers            | Gilbert M. 'Broncho Billy' Anderson |
+	| An Incompetent Hero                                | Roscoe 'Fatty' Arbuckle             |
+	| Back Stage                                         | Roscoe 'Fatty' Arbuckle             |
+	| Balked at the Altar                                | D.W. Griffith                       |
+	| Battling Butler                                    | Buster Keaton                       |
+	| Behind the Screen                                  | Charles Chaplin                     |
+	| Broadway Scandals                                  | George Archainbaud                  |
+	| By the Sea                                         | Charles Chaplin                     |
+	| Caught in the Rain                                 | Charles Chaplin                     |
+	| Chimmie Fadden Out West                            | Cecil B. DeMille                    |
+	| Choosing a Husband                                 | D.W. Griffith                       |
+	| College                                            | Buster Keaton                       |
+	| Coney Island                                       | Roscoe 'Fatty' Arbuckle             |
+	| Cops                                               | Buster Keaton                       |
+	| Dan the Dandy                                      | D.W. Griffith                       |
+	| Don't Change Your Husband                          | Cecil B. DeMille                    |
+	| Dough and Dynamite                                 | Charles Chaplin                     |
+	| Easy Street                                        | Charles Chaplin                     |
+	| Eradicating Aunty                                  | D.W. Griffith                       |
+	| Examination Day at School                          | D.W. Griffith                       |
+	| Father Gets in the Game                            | D.W. Griffith                       |
+	| Fatty and Mabel Adrift                             | Roscoe 'Fatty' Arbuckle             |
+	| Fatty and Mabel at the San Diego Exposition        | Roscoe 'Fatty' Arbuckle             |
+	| Fatty and Mabel's Simple Life                      | Roscoe 'Fatty' Arbuckle             |
+	| Fatty and Minnie He-Haw                            | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Chance Acquaintance                        | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Faithful Fido                              | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Jonah Day                                  | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Magic Pants                                | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's New Role                                   | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Plucky Pup                                 | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Reckless Fling                             | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Tintype Tangle                             | Roscoe 'Fatty' Arbuckle             |
+	| Fig Leaves                                         | Howard Hawks                        |
+	| Finances of the Grand Duke                         | F.W. Murnau                         |
+	| Gentlemen of Nerve                                 | Charles Chaplin                     |
+	| Get Your Man                                       | Dorothy Arzner                      |
+	| Getting Acquainted                                 | Charles Chaplin                     |
+	| Getting Even                                       | D.W. Griffith                       |
+	| Glad Rag Doll                                      | Michael Curtiz                      |
+	| Go West                                            | Buster Keaton                       |
+	| Good Night, Nurse!                                 | Roscoe 'Fatty' Arbuckle             |
+	| Hard Boiled                                        | Victor Schertzinger                 |
+	| He Did and He Didn't                               | Roscoe 'Fatty' Arbuckle             |
+	| Her First Biscuits                                 | D.W. Griffith                       |
+	| His Musical Career                                 | Charles Chaplin                     |
+	| His New Job                                        | Charles Chaplin                     |
+	| His New Profession                                 | Charles Chaplin                     |
+	| His Prehistoric Past                               | Charles Chaplin                     |
+	| His Trysting Place                                 | Charles Chaplin                     |
+	| His Wedding Night                                  | Roscoe 'Fatty' Arbuckle             |
+	| His Wife's Mistakes                                | Roscoe 'Fatty' Arbuckle             |
+	| In the Park                                        | Charles Chaplin                     |
+	| Jones and the Lady Book Agent                      | D.W. Griffith                       |
+	| Just Pals                                          | John Ford                           |
+	| Kane                                               | Kenji Mizoguchi                     |
+	| Lady Helen's Escapade                              | D.W. Griffith                       |
+	| Laughing Gas                                       | Charles Chaplin                     |
+	| Leading Lizzie Astray                              | Roscoe 'Fatty' Arbuckle             |
+	| Leap Year                                          | Roscoe 'Fatty' Arbuckle             |
+	| Lightnin'                                          | John Ford                           |
+	| Long Pants                                         | Frank Capra                         |
+	| Love                                               | Roscoe 'Fatty' Arbuckle             |
+	| Love and Bullets                                   | Roscoe 'Fatty' Arbuckle             |
+	| Lover's Luck                                       | Roscoe 'Fatty' Arbuckle             |
+	| Mabel and Fatty's Married Life                     | Roscoe 'Fatty' Arbuckle             |
+	| Mabel and Fatty's Wash Day                         | Roscoe 'Fatty' Arbuckle             |
+	| Mabel's Wilful Way                                 | Roscoe 'Fatty' Arbuckle             |
+	| Mabel, Fatty and the Law                           | Roscoe 'Fatty' Arbuckle             |
+	| Maid in Morocco                                    | Charles Lamont                      |
+	| Miss Fatty's Seaside Lovers                        | Roscoe 'Fatty' Arbuckle             |
+	| Monday Morning in a Coney Island Police Court      | D.W. Griffith                       |
+	| Moonlight Follies                                  | King Baggot                         |
+	| Moonshine                                          | Roscoe 'Fatty' Arbuckle             |
+	| Mr. Jones at the Ball                              | D.W. Griffith                       |
+	| Mr. Jones Has a Card Party                         | D.W. Griffith                       |
+	| Mrs. Jones Entertains                              | D.W. Griffith                       |
+	| Mrs. Jones' Lover; or, 'I Want My Hat'             | D.W. Griffith                       |
+	| Muggsy's First Sweetheart                          | D.W. Griffith                       |
+	| Naughty Boy                                        | Charles Lamont                      |
+	| Oh Doctor!                                         | Roscoe 'Fatty' Arbuckle             |
+	| One A.M.                                           | Charles Chaplin                     |
+	| Out West                                           | Roscoe 'Fatty' Arbuckle             |
+	| Paid to Love                                       | Howard Hawks                        |
+	| Pay Day                                            | Charles Chaplin                     |
+	| Police                                             | Charles Chaplin                     |
+	| Recreation                                         | Charles Chaplin                     |
+	| Remodeling Her Husband                             | Lillian Gish                        |
+	| Riley the Cop                                      | John Ford                           |
+	| Rip Van Winkle                                     | William K.L. Dickson                |
+	| Roped                                              | John Ford                           |
+	| Sally of the Sawdust                               | D.W. Griffith                       |
+	| Saturday Night                                     | Cecil B. DeMille                    |
+	| Say It with Sables                                 | Frank Capra                         |
+	| Seven Chances                                      | Buster Keaton                       |
+	| Shanghaied                                         | Charles Chaplin                     |
+	| Shoulder Arms                                      | Charles Chaplin                     |
+	| So This Is Love                                    | Frank Capra                         |
+	| Special Delivery                                   | Roscoe 'Fatty' Arbuckle             |
+	| Stupid, But Brave                                  | Roscoe 'Fatty' Arbuckle             |
+	| Sunnyside                                          | Charles Chaplin                     |
+	| Taming a Husband                                   | D.W. Griffith                       |
+	| Thank You                                          | John Ford                           |
+	| That Certain Thing                                 | Frank Capra                         |
+	| That Little Band of Gold                           | Roscoe 'Fatty' Arbuckle             |
+	| That Royle Girl                                    | D.W. Griffith                       |
+	| The Adventurer                                     | Charles Chaplin                     |
+	| The Affairs of Anatol                              | Cecil B. DeMille                    |
+	| The Awakening                                      | D.W. Griffith                       |
+	| The Balloonatic                                    | Buster Keaton                       |
+	| The Bank                                           | Charles Chaplin                     |
+	| The Battle of the Sexes                            | D.W. Griffith                       |
+	| The Bell Boy                                       | Roscoe 'Fatty' Arbuckle             |
+	| The Bond                                           | Charles Chaplin                     |
+	| The Butcher Boy                                    | Roscoe 'Fatty' Arbuckle             |
+	| The Champion                                       | Charles Chaplin                     |
+	| The Chaser                                         | Harry Langdon                       |
+	| The Christmas Burglars                             | D.W. Griffith                       |
+	| The Circus                                         | Charles Chaplin                     |
+	| The Clubman and the Tramp                          | D.W. Griffith                       |
+	| The Cook                                           | Roscoe 'Fatty' Arbuckle             |
+	| The Count                                          | Charles Chaplin                     |
+	| The Cradle Snatchers                               | Howard Hawks                        |
+	| The Cure                                           | Charles Chaplin                     |
+	| The Day After                                      | D.W. Griffith                       |
+	| The Englishman and the Girl                        | D.W. Griffith                       |
+	| The Face on the Barroom Floor                      | Charles Chaplin                     |
+	| The Fascinating Mrs. Francis                       | D.W. Griffith                       |
+	| The Fighting Dude                                  | Roscoe 'Fatty' Arbuckle             |
+	| The Fireman                                        | Charles Chaplin                     |
+	| The Floorwalker                                    | Charles Chaplin                     |
+	| The French Duel                                    | D.W. Griffith                       |
+	| The Garage                                         | Roscoe 'Fatty' Arbuckle             |
+	| The Gibson Goddess                                 | D.W. Griffith                       |
+	| The Goat                                           | Buster Keaton                       |
+	| The Good-for-Nothing                               | Gilbert M. 'Broncho Billy' Anderson |
+	| The Hayseed                                        | Roscoe 'Fatty' Arbuckle             |
+	| The Idle Class                                     | Charles Chaplin                     |
+	| The Immigrant                                      | Charles Chaplin                     |
+	| The Italian Barber                                 | D.W. Griffith                       |
+	| The Joneses Have Amateur Theatricals               | D.W. Griffith                       |
+	| The Kid                                            | Charles Chaplin                     |
+	| The Little Darling                                 | D.W. Griffith                       |
+	| The Masquerader                                    | Charles Chaplin                     |
+	| The Matinee Idol                                   | Frank Capra                         |
+	| The Movies                                         | Roscoe 'Fatty' Arbuckle             |
+	| The New Janitor                                    | Charles Chaplin                     |
+	| The Newlyweds                                      | D.W. Griffith                       |
+	| The Paleface                                       | Buster Keaton                       |
+	| The Parson's Widow                                 | Carl Theodor Dreyer                 |
+	| The Pawnshop                                       | Charles Chaplin                     |
+	| The Peachbasket Hat                                | D.W. Griffith                       |
+	| The Pest                                           | Gilbert M. 'Broncho Billy' Anderson |
+	| The Pilgrim                                        | Charles Chaplin                     |
+	| The Politician's Love Story                        | D.W. Griffith                       |
+	| The Property Man                                   | Charles Chaplin                     |
+	| The Red Mill                                       | Roscoe 'Fatty' Arbuckle             |
+	| The Reformers; or, The Lost Art of Minding One's B | D.W. Griffith                       |
+	| The Rink                                           | Charles Chaplin                     |
+	| The Rough House                                    | Roscoe 'Fatty' Arbuckle             |
+	| The Rounders                                       | Charles Chaplin                     |
+	| The Scarecrow                                      | Buster Keaton                       |
+	| The School Teacher and the Waif                    | D.W. Griffith                       |
+	| The Strong Man                                     | Frank Capra                         |
+	| The Taming of the Shrew                            | D.W. Griffith                       |
+	| The Tramp                                          | Charles Chaplin                     |
+	| The Vagabond                                       | Charles Chaplin                     |
+	| The Waiters' Ball                                  | Roscoe 'Fatty' Arbuckle             |
+	| The Wooden Leg                                     | D.W. Griffith                       |
+	| They Would Elope                                   | D.W. Griffith                       |
+	| Those Awful Hats                                   | D.W. Griffith                       |
+	| Those Country Kids                                 | Roscoe 'Fatty' Arbuckle             |
+	| Those Love Pangs                                   | Charles Chaplin                     |
+	| Three's a Crowd                                    | Harry Langdon                       |
+	| Tillie Wakes Up                                    | Harry Davenport                     |
+	| Triple Trouble                                     | Charles Chaplin                     |
+	| True Heart Susie                                   | D.W. Griffith                       |
+	| Trying to Get Arrested                             | D.W. Griffith                       |
+	| Turn to the Right                                  | Rex Ingram                          |
+	| Upstream                                           | John Ford                           |
+	| Vice Versa                                         | Maurice Elvey                       |
+	| What Happened to Rosa                              | Victor Schertzinger                 |
+	| What's His Name                                    | Cecil B. DeMille                    |
+	| When Love Took Wings                               | Roscoe 'Fatty' Arbuckle             |
+	| Why Change Your Wife?                              | Cecil B. DeMille                    |
+	| Wild Women                                         | John Ford                           |
+	| Wilful Peggy                                       | D.W. Griffith                       |
+	| Wished on Mabel                                    | Roscoe 'Fatty' Arbuckle             |
+	| Woman in the Moon                                  | Fritz Lang                          |
+	| Work                                               | Charles Chaplin                     |
+	+----------------------------------------------------+-------------------------------------+
+	203 rows in set (0.04 sec)
+
+
+	(B) with BTree indexing on titleType
+
+	alter table titlebasics add index index2(titleType);
+	Query OK, 0 rows affected (2.30 sec)
+	Records: 0  Duplicates: 0  Warnings: 0
+
+	show index from titlebasics;                                                                                                                                                        +-------------+------------+------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+	| Table       | Non_unique | Key_name   | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment |
+	+-------------+------------+------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+	| titlebasics |          0 | PRIMARY    |            1 | tconst      | A         |     3464250 |     NULL | NULL   |      | BTREE      |         |               |
+	| titlebasics |          1 | indexname1 |            1 | titleType   | A         |           2 |     NULL | NULL   | YES  | BTREE      |         |               |
+	| titlebasics |          1 | index2     |            1 | titleType   | A         |           2 |     NULL | NULL   | YES  | BTREE      |         |               |
+	+-------------+------------+------------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+	3 rows in set (0.00 sec)
+
+	select distinct titlebasics.primaryTitle, namebasics.primaryName from namebasics join crew on namebasics.nconst=crew.director join ratings on crew.tconst=ratings.tconst join titlebasics on ratings.tconst=titlebasics.tconst where titlebasics.isAdult=0 and titlebasics.genres='comedy' and ratings.averageRating>3 and namebasics.primaryName not like 'a%' and namebasics.primaryName not like 'e%'and namebasics.primaryName not like 'i%'and namebasics.primaryName not like 'o%'and namebasics.primaryName not like 'u%' order by titlebasics.primaryTitle;
+	+----------------------------------------------------+-------------------------------------+
+	| primaryTitle                                       | primaryName                         |
+	+----------------------------------------------------+-------------------------------------+
+	| A Calamitous Elopement                             | D.W. Griffith                       |
+	| A Country Hero                                     | Roscoe 'Fatty' Arbuckle             |
+	| A Day's Pleasure                                   | Charles Chaplin                     |
+	| A Dog's Life                                       | Charles Chaplin                     |
+	| A Gun Fightin' Gentleman                           | John Ford                           |
+	| A Hard Wash                                        | William K.L. Dickson                |
+	| A Jitney Elopement                                 | Charles Chaplin                     |
+	| A Night in the Show                                | Charles Chaplin                     |
+	| A Night Out                                        | Charles Chaplin                     |
+	| A Reckless Romeo                                   | Roscoe 'Fatty' Arbuckle             |
+	| A Woman                                            | Charles Chaplin                     |
+	| A Woman's Fool                                     | John Ford                           |
+	| Alkali Ike's Auto                                  | Gilbert M. 'Broncho Billy' Anderson |
+	| An Awful Skate; or, The Hobo on Rollers            | Gilbert M. 'Broncho Billy' Anderson |
+	| An Incompetent Hero                                | Roscoe 'Fatty' Arbuckle             |
+	| Back Stage                                         | Roscoe 'Fatty' Arbuckle             |
+	| Balked at the Altar                                | D.W. Griffith                       |
+	| Battling Butler                                    | Buster Keaton                       |
+	| Behind the Screen                                  | Charles Chaplin                     |
+	| Broadway Scandals                                  | George Archainbaud                  |
+	| By the Sea                                         | Charles Chaplin                     |
+	| Caught in the Rain                                 | Charles Chaplin                     |
+	| Chimmie Fadden Out West                            | Cecil B. DeMille                    |
+	| Choosing a Husband                                 | D.W. Griffith                       |
+	| College                                            | Buster Keaton                       |
+	| Coney Island                                       | Roscoe 'Fatty' Arbuckle             |
+	| Cops                                               | Buster Keaton                       |
+	| Dan the Dandy                                      | D.W. Griffith                       |
+	| Don't Change Your Husband                          | Cecil B. DeMille                    |
+	| Dough and Dynamite                                 | Charles Chaplin                     |
+	| Easy Street                                        | Charles Chaplin                     |
+	| Eradicating Aunty                                  | D.W. Griffith                       |
+	| Examination Day at School                          | D.W. Griffith                       |
+	| Father Gets in the Game                            | D.W. Griffith                       |
+	| Fatty and Mabel Adrift                             | Roscoe 'Fatty' Arbuckle             |
+	| Fatty and Mabel at the San Diego Exposition        | Roscoe 'Fatty' Arbuckle             |
+	| Fatty and Mabel's Simple Life                      | Roscoe 'Fatty' Arbuckle             |
+	| Fatty and Minnie He-Haw                            | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Chance Acquaintance                        | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Faithful Fido                              | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Jonah Day                                  | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Magic Pants                                | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's New Role                                   | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Plucky Pup                                 | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Reckless Fling                             | Roscoe 'Fatty' Arbuckle             |
+	| Fatty's Tintype Tangle                             | Roscoe 'Fatty' Arbuckle             |
+	| Fig Leaves                                         | Howard Hawks                        |
+	| Finances of the Grand Duke                         | F.W. Murnau                         |
+	| Gentlemen of Nerve                                 | Charles Chaplin                     |
+	| Get Your Man                                       | Dorothy Arzner                      |
+	| Getting Acquainted                                 | Charles Chaplin                     |
+	| Getting Even                                       | D.W. Griffith                       |
+	| Glad Rag Doll                                      | Michael Curtiz                      |
+	| Go West                                            | Buster Keaton                       |
+	| Good Night, Nurse!                                 | Roscoe 'Fatty' Arbuckle             |
+	| Hard Boiled                                        | Victor Schertzinger                 |
+	| He Did and He Didn't                               | Roscoe 'Fatty' Arbuckle             |
+	| Her First Biscuits                                 | D.W. Griffith                       |
+	| His Musical Career                                 | Charles Chaplin                     |
+	| His New Job                                        | Charles Chaplin                     |
+	| His New Profession                                 | Charles Chaplin                     |
+	| His Prehistoric Past                               | Charles Chaplin                     |
+	| His Trysting Place                                 | Charles Chaplin                     |
+	| His Wedding Night                                  | Roscoe 'Fatty' Arbuckle             |
+	| His Wife's Mistakes                                | Roscoe 'Fatty' Arbuckle             |
+	| In the Park                                        | Charles Chaplin                     |
+	| Jones and the Lady Book Agent                      | D.W. Griffith                       |
+	| Just Pals                                          | John Ford                           |
+	| Kane                                               | Kenji Mizoguchi                     |
+	| Lady Helen's Escapade                              | D.W. Griffith                       |
+	| Laughing Gas                                       | Charles Chaplin                     |
+	| Leading Lizzie Astray                              | Roscoe 'Fatty' Arbuckle             |
+	| Leap Year                                          | Roscoe 'Fatty' Arbuckle             |
+	| Lightnin'                                          | John Ford                           |
+	| Long Pants                                         | Frank Capra                         |
+	| Love                                               | Roscoe 'Fatty' Arbuckle             |
+	| Love and Bullets                                   | Roscoe 'Fatty' Arbuckle             |
+	| Lover's Luck                                       | Roscoe 'Fatty' Arbuckle             |
+	| Mabel and Fatty's Married Life                     | Roscoe 'Fatty' Arbuckle             |
+	| Mabel and Fatty's Wash Day                         | Roscoe 'Fatty' Arbuckle             |
+	| Mabel's Wilful Way                                 | Roscoe 'Fatty' Arbuckle             |
+	| Mabel, Fatty and the Law                           | Roscoe 'Fatty' Arbuckle             |
+	| Maid in Morocco                                    | Charles Lamont                      |
+	| Miss Fatty's Seaside Lovers                        | Roscoe 'Fatty' Arbuckle             |
+	| Monday Morning in a Coney Island Police Court      | D.W. Griffith                       |
+	| Moonlight Follies                                  | King Baggot                         |
+	| Moonshine                                          | Roscoe 'Fatty' Arbuckle             |
+	| Mr. Jones at the Ball                              | D.W. Griffith                       |
+	| Mr. Jones Has a Card Party                         | D.W. Griffith                       |
+	| Mrs. Jones Entertains                              | D.W. Griffith                       |
+	| Mrs. Jones' Lover; or, 'I Want My Hat'             | D.W. Griffith                       |
+	| Muggsy's First Sweetheart                          | D.W. Griffith                       |
+	| Naughty Boy                                        | Charles Lamont                      |
+	| Oh Doctor!                                         | Roscoe 'Fatty' Arbuckle             |
+	| One A.M.                                           | Charles Chaplin                     |
+	| Out West                                           | Roscoe 'Fatty' Arbuckle             |
+	| Paid to Love                                       | Howard Hawks                        |
+	| Pay Day                                            | Charles Chaplin                     |
+	| Police                                             | Charles Chaplin                     |
+	| Recreation                                         | Charles Chaplin                     |
+	| Remodeling Her Husband                             | Lillian Gish                        |
+	| Riley the Cop                                      | John Ford                           |
+	| Rip Van Winkle                                     | William K.L. Dickson                |
+	| Roped                                              | John Ford                           |
+	| Sally of the Sawdust                               | D.W. Griffith                       |
+	| Saturday Night                                     | Cecil B. DeMille                    |
+	| Say It with Sables                                 | Frank Capra                         |
+	| Seven Chances                                      | Buster Keaton                       |
+	| Shanghaied                                         | Charles Chaplin                     |
+	| Shoulder Arms                                      | Charles Chaplin                     |
+	| So This Is Love                                    | Frank Capra                         |
+	| Special Delivery                                   | Roscoe 'Fatty' Arbuckle             |
+	| Stupid, But Brave                                  | Roscoe 'Fatty' Arbuckle             |
+	| Sunnyside                                          | Charles Chaplin                     |
+	| Taming a Husband                                   | D.W. Griffith                       |
+	| Thank You                                          | John Ford                           |
+	| That Certain Thing                                 | Frank Capra                         |
+	| That Little Band of Gold                           | Roscoe 'Fatty' Arbuckle             |
+	| That Royle Girl                                    | D.W. Griffith                       |
+	| The Adventurer                                     | Charles Chaplin                     |
+	| The Affairs of Anatol                              | Cecil B. DeMille                    |
+	| The Awakening                                      | D.W. Griffith                       |
+	| The Balloonatic                                    | Buster Keaton                       |
+	| The Bank                                           | Charles Chaplin                     |
+	| The Battle of the Sexes                            | D.W. Griffith                       |
+	| The Bell Boy                                       | Roscoe 'Fatty' Arbuckle             |
+	| The Bond                                           | Charles Chaplin                     |
+	| The Butcher Boy                                    | Roscoe 'Fatty' Arbuckle             |
+	| The Champion                                       | Charles Chaplin                     |
+	| The Chaser                                         | Harry Langdon                       |
+	| The Christmas Burglars                             | D.W. Griffith                       |
+	| The Circus                                         | Charles Chaplin                     |
+	| The Clubman and the Tramp                          | D.W. Griffith                       |
+	| The Cook                                           | Roscoe 'Fatty' Arbuckle             |
+	| The Count                                          | Charles Chaplin                     |
+	| The Cradle Snatchers                               | Howard Hawks                        |
+	| The Cure                                           | Charles Chaplin                     |
+	| The Day After                                      | D.W. Griffith                       |
+	| The Englishman and the Girl                        | D.W. Griffith                       |
+	| The Face on the Barroom Floor                      | Charles Chaplin                     |
+	| The Fascinating Mrs. Francis                       | D.W. Griffith                       |
+	| The Fighting Dude                                  | Roscoe 'Fatty' Arbuckle             |
+	| The Fireman                                        | Charles Chaplin                     |
+	| The Floorwalker                                    | Charles Chaplin                     |
+	| The French Duel                                    | D.W. Griffith                       |
+	| The Garage                                         | Roscoe 'Fatty' Arbuckle             |
+	| The Gibson Goddess                                 | D.W. Griffith                       |
+	| The Goat                                           | Buster Keaton                       |
+	| The Good-for-Nothing                               | Gilbert M. 'Broncho Billy' Anderson |
+	| The Hayseed                                        | Roscoe 'Fatty' Arbuckle             |
+	| The Idle Class                                     | Charles Chaplin                     |
+	| The Immigrant                                      | Charles Chaplin                     |
+	| The Italian Barber                                 | D.W. Griffith                       |
+	| The Joneses Have Amateur Theatricals               | D.W. Griffith                       |
+	| The Kid                                            | Charles Chaplin                     |
+	| The Little Darling                                 | D.W. Griffith                       |
+	| The Masquerader                                    | Charles Chaplin                     |
+	| The Matinee Idol                                   | Frank Capra                         |
+	| The Movies                                         | Roscoe 'Fatty' Arbuckle             |
+	| The New Janitor                                    | Charles Chaplin                     |
+	| The Newlyweds                                      | D.W. Griffith                       |
+	| The Paleface                                       | Buster Keaton                       |
+	| The Parson's Widow                                 | Carl Theodor Dreyer                 |
+	| The Pawnshop                                       | Charles Chaplin                     |
+	| The Peachbasket Hat                                | D.W. Griffith                       |
+	| The Pest                                           | Gilbert M. 'Broncho Billy' Anderson |
+	| The Pilgrim                                        | Charles Chaplin                     |
+	| The Politician's Love Story                        | D.W. Griffith                       |
+	| The Property Man                                   | Charles Chaplin                     |
+	| The Red Mill                                       | Roscoe 'Fatty' Arbuckle             |
+	| The Reformers; or, The Lost Art of Minding One's B | D.W. Griffith                       |
+	| The Rink                                           | Charles Chaplin                     |
+	| The Rough House                                    | Roscoe 'Fatty' Arbuckle             |
+	| The Rounders                                       | Charles Chaplin                     |
+	| The Scarecrow                                      | Buster Keaton                       |
+	| The School Teacher and the Waif                    | D.W. Griffith                       |
+	| The Strong Man                                     | Frank Capra                         |
+	| The Taming of the Shrew                            | D.W. Griffith                       |
+	| The Tramp                                          | Charles Chaplin                     |
+	| The Vagabond                                       | Charles Chaplin                     |
+	| The Waiters' Ball                                  | Roscoe 'Fatty' Arbuckle             |
+	| The Wooden Leg                                     | D.W. Griffith                       |
+	| They Would Elope                                   | D.W. Griffith                       |
+	| Those Awful Hats                                   | D.W. Griffith                       |
+	| Those Country Kids                                 | Roscoe 'Fatty' Arbuckle             |
+	| Those Love Pangs                                   | Charles Chaplin                     |
+	| Three's a Crowd                                    | Harry Langdon                       |
+	| Tillie Wakes Up                                    | Harry Davenport                     |
+	| Triple Trouble                                     | Charles Chaplin                     |
+	| True Heart Susie                                   | D.W. Griffith                       |
+	| Trying to Get Arrested                             | D.W. Griffith                       |
+	| Turn to the Right                                  | Rex Ingram                          |
+	| Upstream                                           | John Ford                           |
+	| Vice Versa                                         | Maurice Elvey                       |
+	| What Happened to Rosa                              | Victor Schertzinger                 |
+	| What's His Name                                    | Cecil B. DeMille                    |
+	| When Love Took Wings                               | Roscoe 'Fatty' Arbuckle             |
+	| Why Change Your Wife?                              | Cecil B. DeMille                    |
+	| Wild Women                                         | John Ford                           |
+	| Wilful Peggy                                       | D.W. Griffith                       |
+	| Wished on Mabel                                    | Roscoe 'Fatty' Arbuckle             |
+	| Woman in the Moon                                  | Fritz Lang                          |
+	| Work                                               | Charles Chaplin                     |
+	+----------------------------------------------------+-------------------------------------+
+	203 rows in set (0.02 sec)
+
+
+
+stored procedure1:
+	
+	delimiter $$
+
+	create procedure printNumMoviesFromGenre(IN gen varchar(50), OUT NoOfMovies INT) begin select count(titlebasics.tconst) INTO NoOfMovies from titlebasics where titlebasics.genres=gen; end$$
+
+	delimiter ;
+
+call procedure1 (a):
+	
+	call printNumMoviesFromGenre('romance',@opvar);
+	Query OK, 1 row affected (0.02 sec)
+
+	select @opvar as output;
+	+--------+
+	| output |
+	+--------+
+	|    221 |
+	+--------+
+	1 row in set (0.00 sec)
+
+call procedure1 (b):
+	
+	call printNumMoviesFromGenre('comedy',@opvar);
+	Query OK, 1 row affected (0.01 sec)
+
+	select @opvar as output;
+	+--------+
+	| output |
+	+--------+
+	|   4677 |
+	+--------+
+	1 row in set (0.00 sec)
+
+stored procedure2:
+
+	delimiter $$
+
+	create procedure incrementVariable(inout a int,in incrementBy int) begin set a = a + incrementBy; end$$ Query OK, 0 rows affected (0.00 sec)
+
+	delimiter ;
+
+call procedure2 (a):
+
+	select @opvar;
+	+--------+
+	| @opvar |
+	+--------+
+	|    221 |
+	+--------+
+	1 row in set (0.00 sec)
+
+	call incrementVariable(@opvar,100);
+	Query OK, 0 rows affected (0.00 sec)
+
+	select @opvar;
+	+--------+
+	| @opvar |
+	+--------+
+	|    321 |
+	+--------+
+	1 row in set (0.00 sec)
+
+call procedure2 (b):
+
+	select @opvar;
+	+--------+
+	| @opvar |
+	+--------+
+	|    221 |
+	+--------+
+	1 row in set (0.00 sec)
+
+	call incrementVariable(@opvar,-100);
+	Query OK, 0 rows affected (0.00 sec)
+
+	select @opvar;
+	+--------+
+	| @opvar |
+	+--------+
+	|    221 |
+	+--------+
+	1 row in set (0.00 sec)
