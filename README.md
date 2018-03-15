@@ -8,3 +8,5 @@ https://www.imdb.com/interfaces/
 https://datasets.imdbws.com/
 
 AND FOLLOW THE INSTRUCTIONS FROM THE WORD FILE, PDF FILE.
+
+THE DATABASE IS EDITED USING controller.py
